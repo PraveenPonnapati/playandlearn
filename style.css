@@ -22,7 +22,7 @@ video#bgVideo {
   filter: brightness(80%) contrast(105%) saturate(110%);
 }
 
-/* Content container */
+/* Main content */
 .content {
   position: relative;
   text-align: center;
@@ -34,25 +34,28 @@ video#bgVideo {
   animation: fadeIn 4s ease forwards, glow 4s ease-in-out infinite alternate;
 }
 
-/* Button styling */
-.play-btn {
-  background: rgba(255, 255, 255, 0.15);
+/* Speaker button (fixed top-right) */
+.sound-btn {
+  position: fixed;
+  top: 20px;
+  right: 25px;
+  background: rgba(0, 0, 0, 0.35); /* semi-transparent black */
   border: 2px solid white;
   color: white;
-  padding: 14px 36px;
-  border-radius: 30px;
+  padding: 10px 16px;
+  border-radius: 50%;
   cursor: pointer;
-  font-size: 20px;
-  margin-top: 25px;
+  font-size: 24px;
   transition: all 0.4s ease;
   opacity: 0;
-  animation: fadeIn 4s ease 2s forwards, shimmer 6s ease-in-out infinite alternate;
+  animation: fadeIn 3s ease 2s forwards, shimmer 6s ease-in-out infinite alternate;
+  z-index: 10;
 }
 
-.play-btn:hover {
-  background: white;
-  color: black;
-  transform: scale(1.05);
+.sound-btn:hover {
+  background: rgba(0, 0, 0, 0.6); /* slightly darker on hover */
+  color: white;
+  transform: scale(1.1);
 }
 
 /* ✨ Cinematic Fade-In */
@@ -88,5 +91,23 @@ video#bgVideo {
   }
   100% {
     box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+  }
+}
+
+/* 🔊 Gentle pulse when sound is ON */
+.pulse {
+  animation: pulseGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 8px rgba(173, 216, 230, 0.4),
+                0 0 16px rgba(173, 216, 230, 0.2);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 25px rgba(173, 216, 230, 0.6),
+                0 0 45px rgba(173, 216, 230, 0.3);
+    transform: scale(1.1);
   }
 }
