@@ -19,7 +19,7 @@
     <source src="media/music.mp3" type="audio/mpeg" />
   </audio>
 
-  <!-- Speaker button (top-right) -->
+  <!-- Speaker button -->
   <button id="soundBtn" class="sound-btn" onclick="toggleSound()">🔇</button>
 
   <!-- Main content -->
@@ -28,26 +28,274 @@
     <p>Relax and enjoy the vibes.</p>
   </div>
 
+  <!-- 🌳 Horizontal Family Tree Section -->
+  <section id="family-section">
+    <h2 class="family-title">🌳 My Family Tree</h2>
+
+    <div class="form-section">
+      <form id="addMemberForm">
+        <input type="text" id="memberName" placeholder="Enter name" required />
+        <select id="parentSelect">
+          <option value="">Select Parent (optional)</option>
+        </select>
+        <input type="file" id="photoUpload" accept="image/*" />
+        <button type="submit">Add Member</button>
+        <button type="button" id="resetTree" style="background:#d9534f;">Reset Tree</button>
+      </form>
+    </div>
+
+    <div id="treeContainer">
+      <div class="tree horizontal" id="familyTree"></div>
+    </div>
+  </section>
+
   <script>
+    /* ====== Background Sound ====== */
     const audio = document.getElementById('bgAudio');
     const soundBtn = document.getElementById('soundBtn');
     let isPlaying = false;
-
     function toggleSound() {
       if (!isPlaying) {
         audio.play();
         soundBtn.textContent = "🔊";
-        soundBtn.classList.add('pulse');  // Add gentle pulsing effect
+        soundBtn.classList.add('pulse');
         isPlaying = true;
       } else {
         audio.pause();
         soundBtn.textContent = "🔇";
-        soundBtn.classList.remove('pulse'); // Stop pulsing
+        soundBtn.classList.remove('pulse');
         isPlaying = false;
       }
     }
+
+    /* ====== Family Tree Data with Local Storage ====== */
+    const defaultTree = [
+      {
+        id: 1,
+        name: "Grandfather",
+        photo: "media/grandfather.jpg",
+        children: [
+          {
+            id: 2,
+            name: "Grandmother",
+            photo: "media/grandmother.jpg",
+            children: [
+              {
+                id: 3,
+                name: "Father",
+                photo: "media/father.jpg",
+                children: [
+                  {
+                    id: 4,
+                    name: "Mother",
+                    photo: "media/mother.jpg",
+                    children: [
+                      {
+                        id: 5,
+                        name: "Son1",
+                        photo: "media/son1.jpg",
+                        children: [
+                          {
+                            id: 6,
+                            name: "Daughter-in-law1",
+                            photo: "media/daughter-in-law1.jpg",
+                            children: [
+                              { id: 7, name: "Grandson1", photo: "media/grandson1.jpg", children: [] },
+                              { id: 8, name: "Grandson2", photo: "media/grandson2.jpg", children: [] }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        id: 9,
+                        name: "Son2",
+                        photo: "media/son2.jpg",
+                        children: [
+                          {
+                            id: 10,
+                            name: "Daughter-in-law2",
+                            photo: "media/daughter-in-law2.jpg",
+                            children: [
+                              { id: 11, name: "Granddaughter", photo: "media/granddaughter.jpg", children: [] }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        id: 12,
+                        name: "Son3",
+                        photo: "media/son3.jpg",
+                        children: [
+                          { id: 13, name: "Daughter-in-law3", photo: "media/daughter-in-law3.jpg", children: [] }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
+    let familyData = JSON.parse(localStorage.getItem("familyTreeData")) || defaultTree;
+    let nextId = Number(localStorage.getItem("familyNextId")) || 14;
+
+    function saveTree() {
+      localStorage.setItem("familyTreeData", JSON.stringify(familyData));
+      localStorage.setItem("familyNextId", nextId);
+    }
+
+    function resetTree() {
+      if (confirm("Are you sure you want to reset the entire tree?")) {
+        localStorage.removeItem("familyTreeData");
+        localStorage.removeItem("familyNextId");
+        location.reload();
+      }
+    }
+    document.getElementById("resetTree").addEventListener("click", resetTree);
+
+    /* --- Create Tree --- */
+    function createTree(member, parentElement) {
+      const node = document.createElement("div");
+      node.classList.add("node");
+
+      const img = document.createElement("img");
+      img.src = member.photo;
+      img.alt = member.name;
+
+      const name = document.createElement("div");
+      name.classList.add("name");
+      name.textContent = member.name;
+
+      node.appendChild(img);
+      node.appendChild(name);
+      parentElement.appendChild(node);
+
+      if (member.children && member.children.length > 0) {
+        const childrenContainer = document.createElement("div");
+        childrenContainer.classList.add("tree", "horizontal");
+
+        member.children.forEach(child => {
+          const connector = document.createElement("div");
+          connector.classList.add("connection-line-horizontal");
+          childrenContainer.appendChild(connector);
+          createTree(child, childrenContainer);
+        });
+
+        parentElement.appendChild(childrenContainer);
+      }
+    }
+
+    function renderTree() {
+      const treeContainer = document.getElementById("familyTree");
+      treeContainer.innerHTML = "";
+      createTree(familyData[0], treeContainer);
+      updateParentDropdown();
+    }
+
+    function updateParentDropdown() {
+      const select = document.getElementById("parentSelect");
+      select.innerHTML = `<option value="">Select Parent (optional)</option>`;
+      function addOptions(member) {
+        const option = document.createElement("option");
+        option.value = member.id;
+        option.textContent = member.name;
+        select.appendChild(option);
+        if (member.children) member.children.forEach(addOptions);
+      }
+      addOptions(familyData[0]);
+    }
+
+    /* --- Add Member --- */
+    document.getElementById("addMemberForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("memberName").value.trim();
+      const parentId = document.getElementById("parentSelect").value;
+      const fileInput = document.getElementById("photoUpload");
+
+      if (!name) return alert("Please enter a name!");
+
+      let photoURL = "media/default.jpg";
+      if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        photoURL = URL.createObjectURL(file);
+      }
+
+      const newMember = {
+        id: nextId++,
+        name,
+        photo: photoURL,
+        children: []
+      };
+
+      if (parentId) {
+        const parent = findMemberById(familyData[0], parseInt(parentId));
+        if (parent) parent.children.push(newMember);
+      } else {
+        familyData.push(newMember);
+      }
+
+      saveTree();
+      renderTree();
+      e.target.reset();
+    });
+
+    function findMemberById(member, id) {
+      if (member.id === id) return member;
+      for (let child of member.children) {
+        const found = findMemberById(child, id);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    /* --- Zoom & Pan --- */
+    const container = document.getElementById("treeContainer");
+    let scale = 1;
+    let isDragging = false;
+    let startX, startY, scrollLeft, scrollTop;
+
+    container.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (e.deltaY < 0) scale += 0.1;
+      else scale -= 0.1;
+      scale = Math.min(Math.max(0.5, scale), 2);
+      document.getElementById("familyTree").style.transform = `scale(${scale})`;
+    });
+
+    container.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      container.style.cursor = "grabbing";
+      startX = e.pageX - container.offsetLeft;
+      startY = e.pageY - container.offsetTop;
+      scrollLeft = container.scrollLeft;
+      scrollTop = container.scrollTop;
+    });
+
+    container.addEventListener("mouseleave", () => {
+      isDragging = false;
+      container.style.cursor = "grab";
+    });
+
+    container.addEventListener("mouseup", () => {
+      isDragging = false;
+      container.style.cursor = "grab";
+    });
+
+    container.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const x = e.pageX - container.offsetLeft;
+      const y = e.pageY - container.offsetTop;
+      container.scrollLeft = scrollLeft - (x - startX);
+      container.scrollTop = scrollTop - (y - startY);
+    });
+
+    /* --- Render Tree on Load --- */
+    renderTree();
   </script>
 
 </body>
 </html>
-
